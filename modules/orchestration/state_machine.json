@@ -1,0 +1,185 @@
+{
+  "Comment": "Data Lakehouse ETL Orchestration - Parallel Public API & RDS pipelines",
+  "StartAt": "ParallelPipelines",
+  "States": {
+    "ParallelPipelines": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "PublicAPIRawToStaged",
+          "States": {
+            "PublicAPIRawToStaged": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${public_api_raw_to_staged}",
+                "Arguments": {
+                  "--datalake_bucket": "${datalake_bucket}",
+                  "--glue_database": "${glue_database}"
+                }
+              },
+              "Next": "PublicAPIDataQuality",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 0,
+                  "BackoffRate": 1.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "PublicAPIFailure"
+                }
+              ]
+            },
+            "PublicAPIDataQuality": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${public_api_data_quality}",
+                "Arguments": {
+                  "--datalake_bucket": "${datalake_bucket}",
+                  "--glue_database": "${glue_database}"
+                }
+              },
+              "Next": "PublicAPIstagedToCurated",
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "PublicAPIFailure"
+                }
+              ]
+            },
+            "PublicAPIstagedToCurated": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${public_api_staged_to_curated}",
+                "Arguments": {
+                  "--datalake_bucket": "${datalake_bucket}",
+                  "--glue_database": "${glue_database}"
+                }
+              },
+              "Next": "PublicAPISuccess",
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "PublicAPIFailure"
+                }
+              ]
+            },
+            "PublicAPISuccess": {
+              "Type": "Pass",
+              "Result": {
+                "status": "success",
+                "source": "public-api"
+              },
+              "End": true
+            },
+            "PublicAPIFailure": {
+              "Type": "Pass",
+              "Result": {
+                "status": "failed",
+                "source": "public-api"
+              },
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "RDSRawToStaged",
+          "States": {
+            "RDSRawToStaged": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${rds_raw_to_staged}",
+                "Arguments": {
+                  "--datalake_bucket": "${datalake_bucket}",
+                  "--glue_database": "${glue_database}"
+                }
+              },
+              "Next": "RDSDataQuality",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.TaskFailed"],
+                  "IntervalSeconds": 2,
+                  "MaxAttempts": 0,
+                  "BackoffRate": 1.0
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "RDSFailure"
+                }
+              ]
+            },
+            "RDSDataQuality": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${rds_data_quality}",
+                "Arguments": {
+                  "--datalake_bucket": "${datalake_bucket}",
+                  "--glue_database": "${glue_database}"
+                }
+              },
+              "Next": "RDSStagedToCurated",
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "RDSFailure"
+                }
+              ]
+            },
+            "RDSStagedToCurated": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${rds_staged_to_curated}",
+                "Arguments": {
+                  "--datalake_bucket": "${datalake_bucket}",
+                  "--glue_database": "${glue_database}"
+                }
+              },
+              "Next": "RDSSuccess",
+              "Catch": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "Next": "RDSFailure"
+                }
+              ]
+            },
+            "RDSSuccess": {
+              "Type": "Pass",
+              "Result": {
+                "status": "success",
+                "source": "rds"
+              },
+              "End": true
+            },
+            "RDSFailure": {
+              "Type": "Pass",
+              "Result": {
+                "status": "failed",
+                "source": "rds"
+              },
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "CheckResults"
+    },
+    "CheckResults": {
+      "Type": "Pass",
+      "Next": "PipelineComplete"
+    },
+    "PipelineComplete": {
+      "Type": "Succeed"
+    }
+  }
+}

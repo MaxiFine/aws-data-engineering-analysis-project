@@ -1,0 +1,62 @@
+{
+  "Comment": "Master Data Lakehouse Orchestration - Lambda Ingest + Child ETL (DMS runs continuously)",
+  "StartAt": "IngestAndOrchestrate",
+  "States": {
+    "IngestAndOrchestrate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${lambda_function_arn}",
+        "Payload": {
+          "source": "master-orchestration"
+        }
+      },
+      "Next": "WaitBeforeETL",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "IngestFailed",
+          "ResultPath": "$.lambda_error"
+        }
+      ],
+      "TimeoutSeconds": 1000
+    },
+    "WaitBeforeETL": {
+      "Type": "Wait",
+      "Seconds": 30,
+      "Next": "TriggerChildETL"
+    },
+    "TriggerChildETL": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync:2",
+      "Parameters": {
+        "StateMachineArn": "${child_state_machine_arn}",
+        "Input": {
+          "source": "master-orchestration"
+        }
+      },
+      "Next": "MasterPipelineComplete",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "ETLFailed",
+          "ResultPath": "$.etl_error"
+        }
+      ],
+      "TimeoutSeconds": 7200
+    },
+    "MasterPipelineComplete": {
+      "Type": "Succeed"
+    },
+    "IngestFailed": {
+      "Type": "Fail",
+      "Error": "LambdaIngestFailed",
+      "Cause": "Lambda ingestion failed"
+    },
+    "ETLFailed": {
+      "Type": "Fail",
+      "Error": "ETLPipelineFailed",
+      "Cause": "ETL pipeline failed"
+    }
+  }
+}
