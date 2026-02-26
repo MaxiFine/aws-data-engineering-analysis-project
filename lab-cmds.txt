@@ -1,0 +1,36 @@
+How do I configure a custom domain name for my CloudFront distribution using Terraform?
+
+How can I set up a GitHub Actions workflow to automatically deploy my Sudoku app using Terraform when I push changes?
+
+How can I add monitoring and analytics to my deployed Sudoku application using Terraform?
+
+How can I set up a GitHub Actions workflow to automatically deploy my Sudoku app using Terraform when I push changes?
+
+How do I configure a custom domain name for my CloudFront distribution using Terraform?
+
+How do I configure a custom domain name for my CloudFront distribution using Terraform?
+
+Please generate an architecture diagram for this Terraform application that I can load in drawio. 
+Please verify, 
+1. You choose the correct AWS and Terraform Icon.
+2. All components can display corectly.
+3. If you not sure which Icon to use then you can use generic Icon. But prefre to use AWS and Terraform Icon as first priority.
+4. Please create with transparent background.
+
+Use Terraform to implement infrastructure as code in terraform folder.
+Using the following AWS solutions:
+- Host the web application in Amazon S3 private bucket
+- Deliver the web content through Amazon CloudFront.
+
+I want to improve the organization and maintainability of my Sudoku game code:
+
+Current issues:
+- The code has grown large and is becoming difficult to manage
+- There's some duplication in the validation and generation logic
+- Event handlers are getting complex with multiple responsibilities
+
+Please suggest how I can:
+1. Refactor the code using appropriate design patterns
+2. Separate concerns (UI, game logic, state management)
+3. Improve code readability and maintainability
+4. Add proper error handling
