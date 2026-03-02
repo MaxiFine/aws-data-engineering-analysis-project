@@ -6,3 +6,5 @@ terraform.tfstate.backup
 terraform.tfvars.example
 *.tfvars
 *.tfvars.json
+oidc-setup.md
+lab-cmds.txt
